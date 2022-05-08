@@ -1,0 +1,27 @@
+May 2nd - 2022
+1. Running kotlin main fn in intellij
+	-> look at how the server is starting, and branch from there.
+2. installing selenium dependency in gradle
+	-> ./kotlin_backend/build.gradle.kts
+	
+
+Apr 30th, 2022 - Saturady 5pm
+1. How to get list of restaurants given address
+	-> check mimic GET request sent when doordash landing page enters address
+		-> cannot tell from network details what the GET request is. Maybe it's hidden?
+	-> if i can mimic http requests sent...then i can mimic 
+		GET request (get restuarants and restaurant meal)
+		POST request (submit order)
+		GET request (order status)
+2. alternative -> make a chrome extension that randomly selects for doordash
+3. GET restaurants from doordash
+	- https://www.doordash.com/graphql?operation=homePageFacetFeed
+	- response: https://gist.github.com/llj0824/5a459a11da16e7f9f739040dfb123bb8
+	- TODO: relies on cookies 
+		-> only need: "ddweb_session_id=e4405ddf-59b0-40ee-893c-16525c4bef3f:1;"
+	- question what is the cookie generation flow
+	-> fuck it...use a headless browser...
+4. copy chrome network request to postmate
+	-> chrome::network::request -> copy -> copy as cURL
+	-> postman::import::rawText -> past cURL
+DECISION -> use headless browser

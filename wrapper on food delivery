@@ -1,0 +1,38 @@
+wrapper on food delivery
+
+input location -> input login -> (number of people) -> make me something popular -> shows your a meal
+menu and food listing -> click order
+
+
+will deliver to delivery locations -> using inputted address 
+
+
+
+
+
+Questions 
+why will people use this
+	- they can't decide what to eat, they want something quick to eat
+	(time spent making decisions, differences in prices across applications)
+how will you make money
+	- at first i won't but, steadily it will become a cent or 5 cents per order
+how will you get customers
+	- write blog articles, buy ads, post on forums
+what type of folks will you target
+	- anyone using food delivery
+
+
+how will you build it
+	- landing screen
+	- payment integration (plaid/stripe)
+		- users pay directly -> we would use pliad api key
+	- results page
+	- connecting with uber eats/caiver/doordash (database & pubsub)
+
+
+how long will this take
+	- probably a month.
+
+existing applications like this
+
+
