@@ -28,7 +28,6 @@ fun main() {
     logger.info {"selected restaurant: $restaurant"}
     logger.info {"menuItems: ${menuItems.mapNotNull { it.toString() }.joinToString( ",\n")}" }
     logger.info {"selectedMenuItems: ${selectedMenuItems.mapNotNull { it.toString() }.joinToString( ",\n")}" }
-
     browser.quit()
 }
 
@@ -42,11 +41,12 @@ class HeadlessBrowser(val isHeadlessBrowser: Boolean = false) {
         System.setProperty("webdriver.chrome.driver", "driver/chromedriver")
 
         val options = ChromeOptions()
-        // Fix to avoid "Please Wait..we are checking your browser" detection.
-        // didn't work.
-        options.addArguments("--disable-blink-features=AutomationControlled")
         if (isHeadlessBrowser) {
             options.setHeadless(true)
+            // Fix to avoid "Please Wait...we are checking your browser" detection.
+            options.setExperimentalOption("useAutomationExtension", false)
+            options.addArguments("window-size=1200x1200")
+            options.addArguments("--disable-blink-features=AutomationControlled")
         }
         browserDriver = ChromeDriver(options)
 
@@ -54,6 +54,7 @@ class HeadlessBrowser(val isHeadlessBrowser: Boolean = false) {
             .withTimeout(Duration.ofSeconds(60*3))
             .pollingEvery(Duration.ofSeconds(5))
             .ignoring(NoSuchElementException::class.java)
+            .ignoring(java.lang.RuntimeException::class.java)
     }
 
     fun getRestaurantMenu(restaurant: Restaurant): List<MenuItem> {
@@ -83,6 +84,7 @@ class HeadlessBrowser(val isHeadlessBrowser: Boolean = false) {
 
         // enter address
         val file = browserDriver.getScreenshotAs(OutputType.FILE)
+        logger.info{"location of screenshot: $file"}
         val addressInput = wait.until {browserDriver.findElement(By.cssSelector("input[placeholder='Enter delivery address']"))}
         addressInput.sendKeys(address)
         addressInput.sendKeys(Keys.ENTER)
