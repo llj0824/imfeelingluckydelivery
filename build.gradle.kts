@@ -6,6 +6,7 @@ val ktorVersion = "1.6.7"
 val logbackVersion = "1.2.10"
 val reactVersion = "17.0.2-pre.299-kotlin-1.6.10"
 val kmongoVersion = "4.5.0"
+val seleniumVersion = "4.0.0"
 
 plugins {
     kotlin("multiplatform") version "1.6.10"
@@ -50,6 +51,12 @@ kotlin {
                 implementation("io.ktor:ktor-server-netty:$ktorVersion")
                 implementation("ch.qos.logback:logback-classic:$logbackVersion")
                 implementation("org.litote.kmongo:kmongo-coroutine-serialization:$kmongoVersion")
+                implementation("org.seleniumhq.selenium:selenium-java:$seleniumVersion")
+                //webdriver manager for selenium
+                implementation("io.github.bonigarcia:webdrivermanager:5.1.1")
+                // logging
+                implementation("io.github.microutils:kotlin-logging-jvm:2.1.21")
+                implementation("ch.qos.logback:logback-classic:1.2.6")
             }
         }
 
@@ -67,7 +74,8 @@ kotlin {
 }
 
 application {
-    mainClass.set("ServerKt")
+    // mainClass.set("ServerKt")
+    mainClass.set("HeadlessBrowserKt")
 }
 
 // include JS artifacts in any JAR we generate
