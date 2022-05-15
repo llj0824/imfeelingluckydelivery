@@ -1,3 +1,5 @@
+import Randomize.Randomizer
+import model.MenuItem
 import model.Restaurant
 import mu.KotlinLogging
 import org.openqa.selenium.By
@@ -13,11 +15,19 @@ import java.util.stream.Collectors
 private val logger = KotlinLogging.logger {}
 
 fun main() {
-    val browser = HeadlessBrowser(isHeadlessBrowser = true)
+    // Running as headless browser gets blocked by doordash's cloudflare.
+    val browser = HeadlessBrowser(isHeadlessBrowser = false)
 
     val address = "1739 N Milwaukee Ave, Chicago, 60647"
     val restaurants: List<Restaurant> = browser.getNearbyRestaurants(address)
-    logger.info { "restaurants: ${restaurants.mapNotNull{ it.toString()}.joinToString(",")}" }
+    logger.info { "restaurants: ${restaurants.mapNotNull{ it.toString()}.joinToString(",\n")}" }
+
+    val restaurant = Randomizer.getRandomRestaurant(restaurants)
+    val menuItems = browser.getRestaurantMenu(restaurant)
+    val selectedMenuItems = Randomizer.getRandomMenuItems(menuItems)
+    logger.info {"selected restaurant: $restaurant"}
+    logger.info {"menuItems: ${menuItems.mapNotNull { it.toString() }.joinToString( ",\n")}" }
+    logger.info {"selectedMenuItems: ${selectedMenuItems.mapNotNull { it.toString() }.joinToString( ",\n")}" }
 
     browser.quit()
 }
@@ -25,6 +35,7 @@ fun main() {
 class HeadlessBrowser(val isHeadlessBrowser: Boolean = false) {
     private val browserDriver: ChromeDriver
     private val wait: FluentWait<WebDriver>
+    private val doorDashBaseUrl = "https://www.doordash.com"
     private val logger = KotlinLogging.logger {}
 
     init {
@@ -32,6 +43,7 @@ class HeadlessBrowser(val isHeadlessBrowser: Boolean = false) {
 
         val options = ChromeOptions()
         // Fix to avoid "Please Wait..we are checking your browser" detection.
+        // didn't work.
         options.addArguments("--disable-blink-features=AutomationControlled")
         if (isHeadlessBrowser) {
             options.setHeadless(true)
@@ -44,10 +56,30 @@ class HeadlessBrowser(val isHeadlessBrowser: Boolean = false) {
             .ignoring(NoSuchElementException::class.java)
     }
 
+    fun getRestaurantMenu(restaurant: Restaurant): List<MenuItem> {
+        // get a store menu, given restuarant id
+        // i.e) Restaurant(storeId=27400, name=Small Cheval, uri=/store/27400/?pickup=false)
+        browserDriver.get(doorDashBaseUrl + restaurant.uri)
+        val menuItemsWebElements = wait.until {browserDriver.findElements(By.cssSelector("div[data-anchor-id='MenuItem']"))}
+        val menuItems: List<MenuItem> = menuItemsWebElements.mapNotNull { item ->
+            try {
+                val menuItemId = item.getAttribute("data-item-id")
+                val menuItemName = item.getAttribute("innerText").split("\n")[0]
+                val menuItemPrice = item.getAttribute("innerText").split("\n")[2]
+                MenuItem(id=menuItemId, name=menuItemName, price=menuItemPrice)
+            } catch (re: java.lang.RuntimeException) {
+                logger.warn { "Could not parse MenuItem: ${item?.getAttribute("innerText")}" }
+                null
+            }
+        }
+
+        return menuItems
+    }
+
 
     fun getNearbyRestaurants(address: String): List<Restaurant> {
         logger.info{ "Retrieving near by restaurants to $address" }
-        browserDriver.get("https://www.doordash.com/")
+        browserDriver.get(doorDashBaseUrl)
 
         // enter address
         val file = browserDriver.getScreenshotAs(OutputType.FILE)
@@ -57,7 +89,7 @@ class HeadlessBrowser(val isHeadlessBrowser: Boolean = false) {
 
         val isNearbyStoreLoaded = wait.until {
             try {
-                // sometimes the Enter is ignored
+                // "Keys.Enter" is ignored, retry multiple times.
                 addressInput.sendKeys(Keys.ENTER)
                 browserDriver.findElements(By.cssSelector("div[data-anchor-id='CarouselStoreContainer']")).size > 1
             } catch (re: java.lang.RuntimeException) {
